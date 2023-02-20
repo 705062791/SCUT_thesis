@@ -11,6 +11,8 @@
 \addbibresource[location=local]{MyLibrary.bib} % 如果在其他盘，改为相对路径。比如F盘，改为：F/MyLibrary.bib
 \addbibresource[location=local]{mybibfile2.bib} % 无论什么来源的bib文件，只要由参考文献的BibTeX组成，都可以使用此模板。参考文献的BibTeX获取方法可百度
 %页眉页脚设置
+\addbibresource[location=local]{mtzbib.bib}
+%这是我使用的文献引用%
 \usepackage{fancyhdr}
 \usepackage{listings}
 \usepackage{xunicode}
@@ -76,8 +78,8 @@
 	\endgroup
 
 	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-	\include{symbols}	% 符号对照表(可选)
-	\include{abbreviation} 	% 缩略词	
+	% \include{symbols}	% 符号对照表(可选)
+	% \include{abbreviation} 	% 缩略词	
 	
 	\mainmatter %此后为阿拉伯数字页码
 	
@@ -87,7 +89,8 @@
     }	% 每章的第一页会默认使用plain，没有页眉。通过重定义plain为fancy解决
     \pagestyle{fancy}	%设置页眉页脚为fancy
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%分章节，结合导言区的\includeonly命令可仅编译部分章节，编译时不用切换界面，直接在相应章节编译即可。
-	\include{chapter01}%第一章
+	\include{1-introduction}
+	% \include{chapter01}%第一章
 	\include{chapter02}%第二章
 	\include{chapter03}%第三章
 	\include{chapter04}
