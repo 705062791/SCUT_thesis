@@ -63,9 +63,35 @@ LTD\parencite{mao2019learning}率先提出了一种代表性的GCN方法（图\r
 Barsoum \etal \parencite{barsoum2018hp}率先提出了一种基于GAN的$seq2seq$人体运动序列预测方法，它使用改进版的WGAN-GP进行训练，与上述基于RNN，CNN或GCN的方法不同，它的网络输入表达为概率密度分布而非固定的人体运动序列。因此，在预测时可以通过为网络提供不同的随机噪声$z$，来对同一个输入运动序列预测不同的未来运动序列。然而，虽然该方法在结果真实性方面有所提升，但由于输入噪声的引入，预测准确性有所下降。在此基础上，BiHMP-GAN\parencite{kundu2019bihmp}同样通过在输入序列中添加从固定分布中采样的随机噪声来为预测过程添加随机性。不同的是，BiHMP-GAN提出了一个双向对抗神经网络来解决预测过程中的模式坍塌问题。
 与此同时，受到上述工作的启发，AGED\parencite{gui2018adversarial}提出了一种新颖的对抗生成框架，它具有两个全局的循环鉴别器，一个鉴别器被用于促进生成序列的保真度，另一个鉴别器与网络进行联合训练，保证未来生成序列的连续性。STMI-GAN\parencite{hernandez2019human}也沿用了该思路，用于处理长时依赖的人体运动序列。Adversarial Refinement Network (ARNet)\parencite{chao2020adversarial}设计了一种新的对抗式的误差调整策略，与上述方法不同的是。判别器不再直接判断生成结果的真实性而是用来估计预测误差，随后精修模块再根据误差调整预测结果。而Lyu \etal \parencite{lyu2021learning}则利用GAN模拟路径积分来解决随机微分方程并预测未来运动轨迹。值得注意的是，由于GAN的对抗训练特性，想要训练达到平衡状态是非常困难的，Cui \etal\parencite{cui2021efficient}提出了一种新的GAN，该GAN使用了spectral归一化，以避免模式坍塌。还有另一种称为AMGAN\parencite{liu2021aggregated}的策略，它由复合GAN结构设计而成，包含用于不同低维身体部位的局部GAN和用于高维全身的全局GAN组成。该方法证明了降维可以有效地提高GAN的训练效率。
 
-总而言之，利用GAN的策略主要可分为两类。（1） 被用作学习算法以帮助网络生成更加真实的结果。（2） 利用随机噪声向网络添加随机性，生成多样化的预测结果。总之，GAN作为一个具有明显优势和劣势的网络，也会给研究人员的工作带来一定的挑战。
+总而言之，利用GAN的策略主要可分为两类。（1） 被用作学习算法以帮助网络生成更加真实的结果。（2） 利用随机噪声向网络添加随机性，生成多样化的预测结果。而GAN作为一个具有明显优势和劣势的网络，也会给研究人员的工作带来一定的挑战。
 \section{基于Transformer}
 近些年，Transformer受到了学术界的广泛关注，它也从自然语言处理（NLP）领域被引入到计算机视觉领域，在诸如图片识别、图片分割等经典问题上大幅领先现有基于卷积神经网络的方法。对于人体运动序列预测问题，网络需要捕捉长时依赖关系的能力。而Transformer的全局感受野特点恰好可以解决该问题。因此出现了一批基于Transformer的方法\parencite{aksan2021spatio, cai2020learning}。
 
-Aksan \etal \parencite{aksan2021spatio}
+Aksan \etal \parencite{aksan2021spatio}设计了一个包含时间和空间分支的Transformer网络，两个分支分别提取输入序列的空间结构信息和时序信息，最后再通过融合模块得到最后的预测结果。
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.8\textwidth]{FigMa/ST-Transformer.png}\\
+    \vspace{-0.3cm}
+    \caption{Spatial-temporal Transformer\cite{aksan2021spatio}}
+    \label{fig:Spatial-temporal_Transformer}
+\end{figure}
+
+其中spatial-temporal Transformer原理如图\ref{fig:Spatial-temporal_Transformer}所示，$j^{(n)}_t$表示$t$时刻，第$n$个关节点。其中，$j^{(n)}_t$只和自己位于同一时间或空间的关节点进行注意力（attention）机制计算，图中颜色的深浅代表关节点之间的关联程度，颜色越深关联性越强，权值也越高，反之则越小。通过分离的时空transformer，该方法间接地提取了时间和空间信息。
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=1\textwidth]{FigMa/ST_Transformer.png}\\
+    \vspace{-0.3cm}
+    \caption{Spatial-temporal Transformer\cite{aksan2021spatio}}
+    \label{fig:Spatial-temporal_Transformer网络结构}
+\end{figure}
+
+完整的网络结构如上图所示，网络由$L$个串联的注意力层构成，每个层包含一个空间维度和时间维度的注意力层，特征被传入注意力层后，分别送往两个分支，用于提取时间和空间信息。提取结束后，空间和时间信息相加，送入前馈神经网络进行特征融合，最终通过线性层输出预测的未来人体运动序列。该方法通过并行的方式分离时间和空间维度，减少了时间复杂度和模型参数量。但分支的方法使得时间和空间维度缺少信息通信手段，导致信息交流受阻，影响最终的模型质量。总的来说，Transformer高效的全局注意力机制有利于模型捕捉长时序依赖，但Transformer的注意力计算模块也导致模型空间的上升和计算开销的增加。此外，时间和空间分支间的通信问题也是未来需要研究的问题。
+
+%看情况还写不写另一个方法的介绍。
+
+\section{总结}
+本章，我们对人体运动姿态预测算法的发展做了一个简要的回顾。在初期，研究人员根据循环神经网络在处理时序数据上的优势，设计了$seq2seq$的网络模型来对输入序列统一编码后预测未来运动序列。但由于循环神经网络对于时序记忆的能力依赖隐变量的大小，因此难以处理长时依赖。此外，梯度消失等训练问题也困扰着现有方法。随后，研究人员将目光转向了卷积神经网络，特别是图卷积神经网络，它对无结构不规则数据的处理有天然的优势。但如何对传统图卷积网络进行改进，使其拥有时序信息处理能力，任然是当前的研究热点。此外，GAN机制的引入允许生成更多样化和真实的结果，但其训练过程的不稳定性和噪声对结果准确性的影响有待进一步解决。近些年，Transformer的兴起给该问题带来了新的解决思路，其全局感受野的特性，允许其捕捉更长范围的全局依赖。但其注意力计算带来的额外计算开销和时空信息间的通信问题，还需要进一步探索。本文希望在现有基于图卷积的方法的基础上，提高模型的时空信息提取能力，并且控制模型的运行开销。
+
 
