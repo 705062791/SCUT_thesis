@@ -80,17 +80,18 @@
 \end{figure}
 我们则基于对以上方法的分析提出了一种基于时空分离策略的Non-Local时空图卷积模块。如图\ref{fig:Our_gcn_structure}所示，首先，我们将数据的时空处理步骤进行解耦。分别分配S-DGCN（Spatial Dense GCN）和T-DGCN（Temporal Dense GCN）用于提取空间信息和时序信息，二者均为标准的GCN，可以捕捉时域和空域中的全局依赖，因此具有Non-Local的特性。值得注意的是，我们称二者为稠密（Dense）的GCN，因此部分现有方法\parencite{cui2020learning}中的邻接矩阵是以人为设计的方式定义，该类方法仅仅允许物理上有联系的关节点间建立联系，导致最终的邻接矩阵是稀疏的，只能处理低阶的连接关系。而真实环境中的由人体运动产生的关节互动是十分复杂的，例如，即使手肘与膝盖部位关节点没有物理上的连接，但在行走动作中，二者仍然会产生规律性的联系。我们认为人为地固定邻接矩阵将会削弱网络对高阶联系的捕捉能力。因此，我们将邻接矩阵设置为完全可学习的网络参数，赋予网络更高的灵活性。由网络根据训练数据自行定义关节点对间的邻接关系。为了降低网络规模，我们也使用了上文中提到的参数共享策略，同一个时空维度下的数据共享一个GCN。
 
+\section{基于ST-DGCN的多阶段网络结构}
 具体的，在实际网络中，假设第$l$层的特征图为$\mathbf{H}^{(l)}\in \mathbb{R}^{T\times V \times F^l}$，其中$F^l$指该层人体关节点特征维度的大小。我们通过公式\ref{equation:ST-DGCN}中的步骤更新特征图$\mathbf{H}^{(l)}$。首先数据经过S-DGCN提取空间信息，随后得到的中间结果被送入T-DGCN提取时间信息并输出到下一层。S-DGCN和T-DGCN以串联的形式结合。
 \begin{equation}
     \begin{aligned}
-        & \widetilde{H^{(l)}} = \text{S-DGCN}(H^{(l)}) = A^s H^{(l)} W^s, \text{(1)}
+        & {\widetilde{H}^{(l)}} = \text{S-DGCN}(H^{(l)}) = A^s H^{(l)} W^s, \text{(1)}
         \\
-        & H^{(l+1)} = \text{T-DGCN}\widetilde{H^{(l)}} = A^t \widetilde{H^{(l)}} W^t, \text{(2)}
+        & H^{(l+1)} = \text{T-DGCN}{\widetilde{H}^{(l)}} = A^t {\widetilde{H}^{(l)}} W^t, \text{(2)}
     \end{aligned}
     \label{equation:ST-DGCN}
 \end{equation}
 
-将公式\ref{equation:ST-DGCN}两个公式合并后，即可得到ST-DGCN（Spatial-temporal-DGCN）的表达式：
+将公式\ref{equation:ST-DGCN}两个公式合并后，即可得到ST-DGCN（Spatial-temporal-DGCN）的表达式，其中$\mathcal{T}$代表对输入特征图的维度顺序进行交换，以使其满足矩阵相乘的维度要求，例如，提供一个$\mathbb{R}^{T\times V\times F^{l}}$的特征矩阵，$\mathcal{T}$维度变换操作，将其前两个维度顺序交换，最终输出的矩阵为$\mathbb{R}^{V\times T\times F^{l}}$。注意，$\mathcal{T}$仅仅改变维度顺序，不改变具体数据，这使得$\mathcal{T}$是一个可逆操作。
 \begin{equation}
     \mathbf{H}^{(l+1)} = \mathcal{T}\left(
     \mathbf{A}_{t}^{(l)}t
@@ -104,3 +105,20 @@
     \right),
     \label{equation:ST-DGCN_ensemble}
 \end{equation}
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=1\textwidth]{FigMa/stage_network.png}
+    \vspace{-0.3cm}
+    \caption{基于ST-DGCN的单阶段网络结构}
+    \label{fig:stage_network_structure}
+\end{figure}
+
+图\ref{fig:stage_network_structure}展示了单个阶段的详细网络结构，对应多阶段网络模型中的每个子阶段（Stage）。在第\label{chapter-5}章中曾提到，我们所设计的多阶段网络具有较灵活的通用性。具体的，多阶段网络框架中的特征提取模块可以根据具体任务灵活更换，做到即插即用，与网络框架解耦。因此，在将ST-DGCN应用到图\ref{fig:multi-stage}中时，不需要对网络结构做出过多修改，只需要用ST-DGCN替换网络中的原始GCN。特征提取模块中的最基本构成部分为GCL（Graph Convolution Layer）,由ST-DGCN、Batchnorm、Tanh、DropOut构成。其中ST-DGCN又包含一对串联的S-DGCN、T-DGCN。两个GCL构成一个GCB（Graph Convolution Block），一个局部的残差连接跨越整个GCB，如图中的灰色矩形部分所示。每个阶段包含$n$个GCB。为了控制参数规模，整个网络包含的GCB数量固定不变，若阶段数量增多，则每个阶段包含GCB数量下降，我们将在实验部分探讨最佳的阶段数。最后，一个大的残差连接建立在该网络的输入与输出之间，被用来提高训练效率，对结果施加一致性约束。
+
+在训练模式下，输入数据$\hat{S}^l_in$首先经过一个位于网络入口处的GCL，它对输入特征的特征空间进行映射，保证与后续网络隐空间维度一致。后续的$n$个GCB对输入特征进行进一步的特征提取。最后得到的特征经过一个ST-DGCN映射后得到该阶段的预测结果。注意，最后一部分由一个独立的ST-DGCN构成，不包含额外的Batchnorm、Tanh和DropOut。因为该部分需要输出直接的结果，不应对特征施加额外的修改。随后该输出结果接受中级监督目标的约束（如果该阶段是最后一个阶段则直接接受真值的约束。）并传递给下一阶段。最终，将\ref{fig:stage_network_structure}中所述网络复制多次，以串联的形式连接，最终即可得到图\ref{fig:multi_stage}中的多阶段网络。
+
+\section{总结}
+在本章节中，我们介绍了基于时空分离策略的Non-Local时空图卷积模块，称为ST-DGCN。首先，我们从具有代表性的现有方法入手，分析了当前几种被广泛使用的具有时空信息提取能力的图卷积模块。经过详细调研，我们发现现有方法在时序数据处理能力、网络效率、长时依赖捕捉能力方面有所欠缺。具体的，LTD\cite[mao2019learning]选择牺牲网络的时间依赖提取能力，换来网络效率的提升。它放弃直接对时序信息建模，将关节点运动轨迹视作一个整体，在特征空间中对其进行变换。因此可以使用传统的GCN仅仅对空间接口进行建模，将网络时间复杂度控制在较低的水平。同期的工作，ST-GCN\cite{yan2018spatial}则使用轻量化的TCN对时序数据进行建模，但受限于卷积核的大小，模型难以捕捉长时的时序依赖。STS-GCN更近一步，将GCN推广到了时间维度，建立一统一的时空GCN模型，但其设计存在冗余，时空效率不高。
+
+在总结以上方法的优劣势后，我们提出了ST-DGCN，该模块的设计思路为：（1）通过时空分离的策略，将图卷积网络推广到时间和空间维度，以间接的方式建立一个高效的时空GCN模块，赋予网络Non-Local的特性。（2）通过人体姿态和关节点序列间的参数共享，控制网络参数规模，保证网络效率。最终我们实现了预测精度和时空效率的均衡，具体我们将在实验部分进一步讨论。另外，得益于第\ref{fig:multi_stage}章中，我们的多阶段模型的高度灵活性和拓展性，ST-DGCN可以轻易地应用于该多阶段模型中，我们将在随后的实验证明，ST-DGCN较强的时空信息提取能力将帮助提升网络的预测性能。

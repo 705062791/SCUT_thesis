@@ -17,6 +17,18 @@
 \usepackage{fancyhdr}
 \usepackage{listings}
 \usepackage{xunicode}
+
+%原来pdf中使用的包
+\usepackage{graphicx}
+\usepackage{pifont}
+\usepackage{makecell}
+\usepackage{tikz}
+\usepackage{comment}
+\usepackage{amsmath,amssymb} % define this before the line numbering.
+\usepackage{color}
+\usepackage{soul}
+\usepackage{multirow}
+
 \newcommand{\etal}{\textit{et al}.}
 
 \renewcommand{\lstlistingname}{列表}
@@ -97,10 +109,11 @@
 	\include{3-background}
 	\include{4-method1}
 	\include{5-method2}
+	\include{6-experiment}
 	% \include{chapter01}%第一章
-	\include{chapter02}%第二章
-	\include{chapter03}%第三章
-	\include{chapter04}
+	% \include{chapter02}%第二章
+	% \include{chapter03}%第三章
+	% \include{chapter04}
 	
 	% 自行根据需要添加章节。
 
@@ -122,8 +135,8 @@
  	% 只有一个附录
 % 	\include{appendix}
  	% 有多个附录
-	\include{appendix1} %附录1
-	\include{appendix2} %附录2
+	% \include{appendix1} %附录1
+	% \include{appendix2} %附录2
  	%%%%%%%%%%%%%%%%%%%
 	\include{pub} %成果
 	\include{ack} %致谢
