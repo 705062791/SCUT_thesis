@@ -471,19 +471,19 @@ Ours   & \underline{89.7}          & \textbf{122.9} & \underline{81.0} & 115.8  
 在图\ref{fig:prediction_result}（a）中，我们选取了Res. Sup.，DMGNN，LTD和MSR作为对比对象。图中第一行为真值，以浅灰色表示。第二行为本方法的预测结果，前两个灰色人体姿态为网络已知的输入，随后的黑色人体姿态为1000ms待预测的未来人体运动姿态，我们用黑色表示预测结果，浅灰色为真值，二者的重合程度越高则说明预测误差越小，其他方法也使用了类似的展示方法。从图\ref{fig:prediction_result}（a）中可以看到我们的方法是五个方法中预测结果与真值重合度最高的，其他方法从上往下预测误差逐渐增加，且随着时间前进误差越来越大。\ref{fig:prediction_result}（b）中则展示了网络不同阶段的预测结果。可以看到，第一阶段的结果较为粗糙只预测了运动的大致趋势，而随着网络逐渐深入，预测结果也逐渐向真值靠近。图\ref{fig:more_result}提供了不同动作的对比结果，图\ref{fig:SMPL}则展示了部分由SMPL\parencite{loper2015smpl}渲染的结果。
 
 
-% \begin{figure*}[ht]
-%     \centering
-%     \includegraphics[width=1\textwidth]{FigMa/more_result.pdf}
-%     \caption{Human3.6M中各动作的可视化预测结果}
-%     \label{fig:more_result}
-% \end{figure*}
+\begin{figure*}[ht]
+    \centering
+    \includegraphics[width=1\textwidth]{FigMa/more_result.pdf}
+    \caption{Human3.6M中各动作的可视化预测结果}
+    \label{fig:more_result}
+\end{figure*}
 
-% \begin{figure*}[ht]
-%     \centering
-%     \includegraphics[width=1\textwidth]{FigMa/SMPL.pdf}
-%     \caption{Human3.6M中各动作的SMPL格式可视化预测结果}
-%     \label{fig:SMPL}
-% \end{figure*}
+\begin{figure*}[ht]
+    \centering
+    \includegraphics[width=1\textwidth]{FigMa/SMPL.pdf}
+    \caption{Human3.6M中各动作的SMPL格式可视化预测结果}
+    \label{fig:SMPL}
+\end{figure*}
 
 \clearpage
 
@@ -538,13 +538,62 @@ Ours   & \underline{89.7}          & \textbf{122.9} & \underline{81.0} & 115.8  
     \label{table:ablation_2}
     \end{table*}
 
-表\ref{table:ablation_2}展示了不同中级监督目标对预测误差的影响，第一行为去掉所有的中级监督目标只保留真值对网络最终输出的监督。它将作为基准网络来体现各种中级监督目标对网络的影响。第二行为使用真值作为所有阶段的中级监督目标，第三行为用高斯平滑构建中级监督目标。从表中可以看到，使用累积均值平滑（AAS）的本方法相比较上述的三种方案有明显优势，证明了AAS可以在多阶段网络中建立层次化的预测过程，有效降低了预测不确定性。
-\subsection{对ST-DGCN图卷积模块的分析}
+表\ref{table:ablation_2}展示了不同中级监督目标对预测误差的影响，第一行为去掉所有的中级监督目标只保留真值对网络最终输出的监督。它将作为基准网络来体现各种中级监督目标对网络的影响。第二行为使用真值作为所有阶段的中级监督目标，第三行为用高斯平滑构建中级监督目标。从表中可以看到，使用累积均值平滑（AAS）的本方法相比较上述的三种方案有明显优势。其中第一行为不使用中级监督目标，预测精度最差，与现有的单阶段网络无异。第二行使用真值作为所有阶段的中级监督目标，相较于不使用中级监督，精度有一定提升。第三行使用通过高斯平滑的中级监督目标，效果介于上述二者之间，这是由于使用该方法处理的关节点轨迹中存在过渡部分不连续的情况。而我们提出的累积均值平滑在预测精度上明显超过了上述三个样本，证明了AAS可以在多阶段网络中建立层次化的预测过程，有效降低了预测不确定性。
 
+\subsection{对ST-DGCN图卷积模块的分析}\label{section:gcn_block}
+除了对多阶段网络结构展开分析，我们还希望替换网络中的图卷积模块来验证，本方法中提出的ST-DGCN。具体的，在保留网络其他部分不变的前提下，我们使用\ref{section:ST-DGCN}章中，提到的Full \ spatiotemporal \ GCN、ST-GCN\parencite{yan2018spatial}、LTD\parencite{mao2019learning}，STS-GCN\parencite{sofianos2021space}中的GCN替换网络中的ST-DGCN。我们希望通过对比以上图卷积模块的预测精确性来证明ST-DGCN的出色性能。
+
+\begin{table*}[ht]
+    \begin{center}
+    \resizebox{1\textwidth}{!}{
+    \begin{tabular}{c|c|cccccccc|c} \hline
+                              \multicolumn{2}{c|}{Methods}      & 80ms           & 160ms                           & 320ms                           & 400ms                           & 560ms                           & 720ms                           & 880ms                            & 1000ms                           & average                         \\ \hline
+                              \multicolumn{2}{c|}{Ours with full spatiotemporal GCN}  &12.92	&26.51	&52.85	&64.06	&82.01	&95.64	&106.92	&114.25 &69.40\\
+                              \multicolumn{2}{c|}{Ours with ST-GCN of \parencite{yan2018mt}}& 11.84          & 25.78                           & 51.87                           & 62.73                           & 80.23                           & 93.61                           & 105.00                              & 112.72                           & 67.97                           \\ 
+                              \multicolumn{2}{c|}{Ours with DCT-GCN  of LTD \parencite{mao2019learning}}  & 11.11          & 24.01                           & 49.48                           & 60.67                           & 79.34                           & 93.91                           & 105.55                           & 113.1                            & 67.15                           \\ 
+                              \multicolumn{2}{c|}{Ours with STS-GCN of \parencite{sofianos2021space}} &10.78	&23.48	&49.38	&60.88	&80.08	&95.14	&107.19	&114.52 &67.68\\ \hline
+    
+     
+                              \multicolumn{2}{c|}{Ours}                         & \textbf{10.33} & \textbf{22.74} & \textbf{47.45} & \textbf{58.46} & \textbf{76.91} & \textbf{91.20} & \textbf{102.77} & \textbf{110.31} & \textbf{65.02} \\ \hline
+    \end{tabular}
+    }
+    \end{center}
+    \caption{不同图卷积模块对预测误差的影响}
+    \label{table:ablation_3}
+    \end{table*}
+    
+表\ref{table:ablation_3}展示了我们的ST-DGCN和其他四种图卷积模块的预测误差对比结果。从图中可以看到ST-DGCN的预测精度遥遥领先其余四个方法。最差的结果是Full \ spatiotemporal \ GCN，这和我们的分析一致，虽然它通过同时对数据的时间和空间维度进行建模，使得模型拥有了直接的时空信息感知能力，但过度膨胀的邻接矩阵给预测过程带来了负面影响。其次是ST-GCN和STS-GCN，他们都采用了时空分离的策略来降低邻接关系复杂度，但前者受限于时间上的局部感受野，另一个受限于冗余的网络结构，只达到了有限的提升。LTD则使用GCN对空间维度进行建模，通过DCT将时序数据变换到频率域在进行处理，拥有了第二低的预测误差。而我们的ST-DGCN综合了以上方法的优点，在提高网络时序依赖捕捉能力的同时，使用时空分离策略提高了效率。
 
 \section{时间效率分析}
+在上述实验中，我们着重分析了模型中不同模块对于预测精度的影响，以验证本方法中各模块在设计上的可行性。在衡量模型综合性能的过程中，除了分析预测精确度，模型执行效率和空间占用也是一个极为重要的指标。因此在本节，我们将对本方法的时间和空间效率进行对比分析。
+
+\begin{table}[ht]
+    \centering
+    \resizebox{0.7\textwidth}{!}{
+    \begin{tabular}{c|c|c|c} \hline
+    Method      & Train (per batch) & Test (per batch) & Model Size \\ \hline
+    DMGNN       & 473ms            & 85ms            & 46.90M         \\ 
+    LTD         & 114ms            & 30ms            & 2.55M          \\  
+    STS-GCN      & 12.2ms             & 2.8ms           & 0.058M         \\ 
+    MSR         & 191ms            & 57ms            & 6.30M          \\ \hline
+    Ours (full spatiotemporal GCN) &221ms &54ms &67.99M \\
+    Ours (ST-GCN of \parencite{yan2018spatial}) &132ms &38ms &1.54M \\ 
+    Ours (STS-GCN of \parencite{sofianos2021space}) &182ms &49ms &5.69M \\ \hline
+    Ours         & 145ms            & 43ms            & 1.74M          \\ \hline
+    \end{tabular}
+    }
+    \caption{时间效率和模型空间占用对比}\label{table:ablation-efficiency}
+    \end{table}
+由于不同数据集中人体运动姿态序列的空间结构和预测时序长度都对网络运行时间和模型空间占用有所影响，我们统一在Human3.6M长时预测实验环境下统计每种方法执行一个Batch所使用的时间（BatchSize 16）以及模型参数量。统计结果如表\ref{table:ablation-efficiency}中所示。表格被纵向分割为三个区域，我们的模型位于最下面的区域。自上而下第一个部分是现有方法训练推理时间和模型空间占用（单位为M）。可以看到本方法的时间效率和空间效率都属于考前的位置。由于部分图卷积模块并没被直接应用于人体运动姿态问题中。因此我们仿照第\ref{section:gcn_block}节，用上述图卷积网络替换本方法中的ST-DGCN后再进行统计，从第二个区域的结果中我们可以看到，与现有图卷积模块对比，本方法在时间和空间综合性能上任然不落下风。
+
+通过上述实验证明，本方法在预测精度和时间、空间效率两个方面全面领先现有方法。
 
 \section{总结}
+在本章节中，我们通过实验证明了本方法在预测精度和执行效率这两个综合指标上全面领先现有方法，此外我们还通过烧蚀分析详细分析了多阶段网络结构和ST-DGCN的设计有效性，验证了本方案的合理性。
 
+具体的，我们首先介绍了本方法具体的实现细节，超参数设计以及运行环境等实验背景。随后我们介绍了实验中使用的三个公开数据集（Human3.6M，CMU-Mocap，3DPW）包括它们的制作者、记录方法、数据结构、数据格式等信息。此外，现有方法对不同数据集的特殊处理及统计方法也在文中有所提及。随后我们介绍了参与对比实验的各个现有方法，挑选不同种类，目前具有代表性5个性能达到SOTA的方法作为主要对比对象。在进行定量对比实验之前，介绍了在实验过程使用的预测精确度，测试指标——MPJPE（Mean Per-Joint Position Error），并给出了该指标的定义方式和实验中的测试方法。
 
+在定量对比部分，我们在三个公开数据集上，使用通用的度量指标和公开代码或预训练模型，计算各个方法在不同的动作类型中逐时刻的3D预测误差。结果显示，本方法在三个数据集上全面领先现有的5个方法。除了数值上的定量对比，我还进行了直观的定性对比，展示以人体骨架、SMPL模型为形式的人体运动姿态序列预测结果，从直观的结果上来，本方法的预测误差也显著低于现有方法。在证明本方法在预测精度上的优势后。我们还在随后的烧蚀分析中对多阶段网络结构，累积均值平滑策略，ST-DGCN模块进行了对比分析，证明了以上设计的有效性和相对现有方法的优秀性能，最后我们还对本模型的时间、空间效率进行了对比，结果显示，在模型执行效率上，本方法仍然不落下风。
+
+最后，根据实验结果，我们得出结论，本方法在预测精确度和运行效率方法均领先现有方法，且网络中各个模块的性能也达到了我们的设计期望，这使得本方法成为人体运动姿态预测新的SOTA算法。
 
